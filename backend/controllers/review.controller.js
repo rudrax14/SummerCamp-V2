@@ -1,126 +1,74 @@
 const Review = require('../models/review.model');
 const Campground = require('../models/campground.model');
+const catchAsync = require('../utils/catchAsync');
+const CustomError = require('../utils/CustomError');
 
-exports.addReview = async (req, res) => {
+exports.addReview = catchAsync(async (req, res, next) => {
     const { content, rating, campgroundId } = req.body;
-    try {
-        const newReview = new Review({
-            content,
-            rating,
-            userId: req.user.id,
-            campgroundId
-        });
 
-        const review = await newReview.save();
+    const newReview = new Review({
+        content,
+        rating,
+        userId: req.user.id,
+        campgroundId
+    });
 
-        // Push into campground's reviews
-        const campground = await Campground.findById(campgroundId);
-        campground.reviews.push(review._id);
-        await campground.save();
+    const review = await newReview.save();
 
-        res.status(201).json({
-            success: true,
-            data: review
-        });
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({
-            success: false,
-            message: "Something went wrong while adding the review"
-        });
+    // Push into campground's reviews
+    const campground = await Campground.findById(campgroundId);
+    campground.reviews.push(review._id);
+    await campground.save();
+
+    res.status(201).json({
+        success: true,
+        data: review
+    });
+
+});
+
+exports.editReview = catchAsync(async (req, res, next) => {
+    const { id } = req.params;
+    const review = await Review.findById(id);
+
+    if (!review) {
+        return next(new CustomError(`Review not found with id of ${id}`, 404));
     }
-};
 
-// exports.getReviewById = async (req, res) => {
-//     const { id } = req.params;
-//     try {
-//         const review = await Review.findById(id)
-//             .populate('userId', 'username')
-//             .populate('campgroundId', 'name');
+    Object.assign(review, req.body);
 
-//         if (!review) {
-//             return res.status(404).json({
-//                 success: false,
-//                 message: "Review not found"
-//             });
-//         }
+    const updatedReview = await review.save();
 
-//         res.status(200).json({
-//             success: true,
-//             data: review
-//         });
-//     } catch (err) {
-//         console.log(err);
-//         res.status(500).json({
-//             success: false,
-//             message: "Something went wrong while fetching the review"
-//         });
-//     }
-// };
+    res.status(200).json({
+        success: true,
+        data: updatedReview
+    });
+});
 
-exports.editReview = async (req, res) => {
-    const { id } = req.body;
-    try {
-        const review = await Review.findById(id);
+exports.deleteReview = catchAsync(async (req, res, next) => {
+    const { id } = req.params; // Corrected to req.params
 
-        if (!review) {
-            return res.status(404).json({
-                success: false,
-                message: "Review not found"
-            });
-        }
+    // Find and delete the review by ID
+    const review = await Review.findByIdAndDelete(id);
 
-        Object.assign(review, req.body);
-
-        const updatedReview = await review.save();
-
-        res.status(200).json({
-            success: true,
-            data: updatedReview
-        });
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({
-            success: false,
-            message: "Something went wrong while editing the review"
-        });
+    // If the review is not found, return a 404 status with an error message
+    if (!review) {
+        return next(new CustomError(`Review not found with id of ${id}`, 404));
     }
-};
 
-exports.deleteReview = async (req, res) => {
-    const { id } = req.body; 
-    try {
-        // Find and delete the review by ID
-        const review = await Review.findByIdAndDelete(id);
-
-        // If review is not found, return a 404 status with an error message
-        if (!review) {
-            return res.status(404).json({
-                success: false,
-                message: "Review not found"
-            });
-        }
-
-        // Find the campground associated with the review
-        const campground = await Campground.findById(review.campgroundId);
-        if (campground) {
-            // Remove the review ID from the campground's reviews array
-            campground.reviews.pull(review._id);
-            await campground.save(); // Save the updated campground
-        }
-
-        // Return a success message
-        res.status(200).json({
-            success: true,
-            message: "Review deleted successfully"
-        });
-    } catch (err) {
-        console.error(err); // Log the error for debugging
-        // Return a 500 status with a generic error message
-        res.status(500).json({
-            success: false,
-            message: "Something went wrong while deleting the review"
-        });
+    // Find the campground associated with the review
+    const campground = await Campground.findById(review.campgroundId);
+    if (campground) {
+        // Remove the review ID from the campground's reviews array
+        campground.reviews.pull(review._id);
+        await campground.save(); // Save the updated campground
     }
-};
+
+    // Return a success message
+    res.status(200).json({
+        success: true,
+        message: "Review deleted successfully"
+    });
+});
+
 

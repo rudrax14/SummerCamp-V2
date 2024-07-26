@@ -1,49 +1,71 @@
 const jwt = require('jsonwebtoken');
 const Campground = require('../models/campground.model');
 const redis = require('../config/redisConnection');
+const catchAsync = require('../utils/catchAsync');
+const CustomError = require('../utils/CustomError');
+const Review = require('../models/review.model');
 
-exports.auth = (req, res, next) => {
+exports.auth = catchAsync(async (req, res, next) => {
+    const token = req.header("Authorization")?.replace("Bearer ", "") || req.body.token || req.cookies.token;
+
+    if (!token) {
+        return next(new CustomError("No token provided", 401));
+    }
+
     try {
-        const token = req.header("Authorization")?.replace("Bearer ", "") || req.body.token || req.cookies.token;
-
-        if (!token) {
-            return res.status(401).json({ success: false, message: 'Token Missing' });
-        }
-
         // Check if the token is blacklisted
-        redis.get(`blacklist:${token}`, (err, reply) => {
+        redis.get(`blacklist:${token}`, (err, data) => {
             if (err) {
-                return res.status(500).json({ success: false, message: "Error in redis connection" });
-            }
-            if (reply) {
-                return res.status(401).json({ success: false, message: "Token is blacklisted" });
+                console.error('Redis error:', err);
+                return next(new CustomError("Error checking token blacklist", 500));
             }
 
-            jwt.verify(token, process.env.JWT_SECRET, (err, decode) => {
-                if (err) {
-                    return res.status(401).json({ success: false, message: "Token is invalid" });
+            if (data) {
+                return next(new CustomError("Token is blacklisted", 401));
+            } else {
+                try {
+                    // Verify token
+                    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                    req.user = decoded; // Attach user information to the request object
+                    next();
+                } catch (err) {
+                    console.error('Token verification error:', err);
+                    return next(new CustomError("Invalid token", 401));
                 }
-                req.user = decode;
-                next();
-            });
+            }
         });
     } catch (err) {
-        console.error(err);
-        return res.status(401).json({ success: false, message: "Something went wrong while verifying token" });
+        console.error('Unexpected error:', err);
+        return next(new CustomError("An unexpected error occurred", 500));
     }
-};
+});
 
-exports.isAuthor = async (req, res, next) => {
+exports.isAuthor = catchAsync(async (req, res, next) => {
     const { id } = req.params;
-    try {
-        const campground = await Campground.findById(id);
-        if (campground && campground.author.equals(req.user.id)) {
-            next();
-        } else {
-            res.status(403).json({ success: false, message: "You do not have permission to perform this action" });
-        }
-    } catch (err) {
-        console.error(err);
-        res.status(400).json({ success: false, message: "Campground not found" });
+
+    const campground = await Campground.findById(id);
+
+    if (campground.authortoString() === req.user.id) {
+        next();
+    } else {
+        return next(new CustomError("You do not have permission to perform this action", 403));
     }
-};
+
+});
+
+exports.isReviewAuthor = catchAsync(async (req, res, next) => {
+    const { id } = req.params; // Corrected to req.params
+    const review = await Review.findById(id);
+
+    if (!review) {
+        return next(new CustomError("Review not found", 404));
+    }
+
+    // Assuming req.user.id is a string, convert review.userId to string before comparison
+    if (review.userId.toString() === req.user.id) {
+        next();
+    } else {
+        return next(new CustomError("You do not have permission to perform this action", 403));
+    }
+});
+

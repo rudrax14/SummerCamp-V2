@@ -1,65 +1,52 @@
 const Campground = require('../models/campground.model');
 const User = require("../models/user.models");
 const catchAsync = require('../utils/catchAsync');
+const CustomError = require('../utils/CustomError');
 const uploadFileToCloudinary = require('../utils/imageUpload');
 
-exports.createCampground = async (req, res) => {
+exports.createCampground = catchAsync(async (req, res, next) => {
     const { name, geometry, price, location, description } = req.body;
 
     if (!req.files || !req.files.thumbnail) {
-        return res.status(400).json({
-            success: false,
-            message: "No file uploaded"
-        });
+        return next(new CustomError('Please upload a image', 400));
     }
 
     const file = req.files.thumbnail;
 
-    try {
-        const result = await uploadFileToCloudinary(file, "campgrounds");
-        // Create a new campground with the uploaded thumbnail URL
-        const newCampground = new Campground({
-            name,
-            thumbnail: result.secure_url,
-            geometry,
-            price,
-            location,
-            description,
-            author: req.user.id,
-        });
 
-        const campground = await newCampground.save();
+    const result = await uploadFileToCloudinary(file, "campgrounds");
+    // Create a new campground with the uploaded thumbnail URL
+    const newCampground = new Campground({
+        name,
+        thumbnail: result.secure_url,
+        geometry,
+        price,
+        location,
+        description,
+        author: req.user.id,
+    });
 
-        // Update the user's campgrounds array
-        await User.findByIdAndUpdate(req.user.id, {
-            $push: { campgrounds: campground._id }
-        });
+    const campground = await newCampground.save();
 
-        res.status(201).json({
-            success: true,
-            data: campground
-        });
-    } catch (err) {
-        console.error('Error during upload:', err); // Log any errors during upload
-        res.status(500).json({
-            success: false,
-            message: "Something went wrong while creating the campground"
-        });
-    }
-};
+    // Update the user's campgrounds array
+    await User.findByIdAndUpdate(req.user.id, {
+        $push: { campgrounds: campground._id }
+    });
+
+    res.status(201).json({
+        success: true,
+        data: campground
+    });
+
+});
 
 
-exports.getCampgrounds = async (req, res) => {
-    try {
-        const campgrounds = await Campground.find().populate('author', 'username');
-        res.status(200).json({ success: true, data: campgrounds });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Something went wrong while fetching campgrounds" });
-    }
-};
+exports.getCampgrounds = catchAsync(async (req, res) => {
+    const campgrounds = await Campground.find().populate('author', 'username');
+    res.status(200).json({ success: true, data: campgrounds });
+});
 
-exports.getCampgroundById = catchAsync(async (req, res) => {
+exports.getCampgroundById = catchAsync(async (req, res, next) => {
     const { id } = req.params;
 
     const campground = await Campground.findById(id)
@@ -81,66 +68,52 @@ exports.getCampgroundById = catchAsync(async (req, res) => {
     res.status(200).json({ success: true, data: campground });
 });
 
-exports.updateCampground = async (req, res) => {
+exports.updateCampground = catchAsync(async (req, res, next) => {
     const { id } = req.params;
 
-    try {
-        const campground = await Campground.findById(id);
-        if (!campground) {
-            return res.status(404).json({ success: false, message: "Campground not found" });
-        }
 
-        if (!campground.author.equals(req.user.id)) {
-            return res.status(403).json({ success: false, message: "You do not have permission to update this campground" });
-        }
-
-        // Update fields
-        const updateFields = ['name', 'geometry', 'price', 'location', 'description'];
-        updateFields.forEach(field => {
-            if (req.body[field] !== undefined) {
-                campground[field] = req.body[field];
-            }
-        });
-
-        // Handle file upload if there's a new thumbnail
-        if (req.files && req.files.thumbnail) {
-            const file = req.files.thumbnail;
-            const result = await uploadFileToCloudinary(file, "campgrounds");
-            campground.thumbnail = result.secure_url;
-        }
-
-        const updatedCampground = await campground.save();
-        res.status(200).json({ success: true, data: updatedCampground });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Something went wrong while updating the campground" });
+    const campground = await Campground.findById(id);
+    if (!campground) {
+        return next(new CustomError(`Campground not found with id of ${req.params.id}`, 404));
     }
-};
 
-exports.deleteCampground = async (req, res) => {
+    // Update fields
+    const updateFields = ['name', 'geometry', 'price', 'location', 'description'];
+    updateFields.forEach(field => {
+        if (req.body[field] !== undefined) {
+            campground[field] = req.body[field];
+        }
+    });
+
+    // Handle file upload if there's a new thumbnail
+    if (req.files && req.files.thumbnail) {
+        const file = req.files.thumbnail;
+        const result = await uploadFileToCloudinary(file, "campgrounds");
+        campground.thumbnail = result.secure_url;
+    }
+
+    const updatedCampground = await campground.save();
+    res.status(200).json({ success: true, data: updatedCampground });
+
+});
+
+exports.deleteCampground = catchAsync(async (req, res) => {
     const { id } = req.params;
-    try {
-        const campground = await Campground.findById(id);
-        if (!campground) {
-            return res.status(404).json({ success: false, message: "Campground not found" });
-        }
 
-        if (!campground.author.equals(req.user.id)) {
-            return res.status(403).json({ success: false, message: "You do not have permission to delete this campground" });
-        }
-
-        // Remove the campground from the user's campgrounds array
-        await User.findByIdAndUpdate(req.user.id, {
-            $pull: { campgrounds: campground._id }
-        });
-
-        // Delete the campground
-        await Campground.findByIdAndDelete(id);
-
-        res.status(200).json({ success: true, message: "Campground deleted successfully" });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Something went wrong while deleting the campground" });
+    const campground = await Campground.findById(id);
+    if (!campground) {
+        return next(new CustomError(`Campground not found with id of ${req.params.id}`, 404));
     }
-};
+
+    // Remove the campground from the user's campgrounds array
+    await User.findByIdAndUpdate(req.user.id, {
+        $pull: { campgrounds: campground._id }
+    });
+
+    // Delete the campground
+    await Campground.findByIdAndDelete(id);
+
+    res.status(200).json({ success: true, message: "Campground deleted successfully" });
+
+});
 
