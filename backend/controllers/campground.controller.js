@@ -1,5 +1,6 @@
 const Campground = require('../models/campground.model');
 const User = require("../models/user.models");
+const catchAsync = require('../utils/catchAsync');
 const uploadFileToCloudinary = require('../utils/imageUpload');
 
 exports.createCampground = async (req, res) => {
@@ -58,31 +59,27 @@ exports.getCampgrounds = async (req, res) => {
     }
 };
 
-exports.getCampgroundById = async (req, res) => {
+exports.getCampgroundById = catchAsync(async (req, res) => {
     const { id } = req.params;
-    try {
-        const campground = await Campground.findById(id)
-            .populate({
-                path: 'author',
-                select: 'name email'
-            })
-            .populate({
-                path: 'reviews',
-                populate: {
-                    path: 'userId',
-                    select: 'content rating name'
-                }
-            });
 
-        if (!campground) {
-            return res.status(404).json({ success: false, message: "Campground not found" });
-        }
-        res.status(200).json({ success: true, data: campground });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: "Something went wrong while fetching the campground" });
+    const campground = await Campground.findById(id)
+        .populate({
+            path: 'author',
+            select: 'name email'
+        })
+        .populate({
+            path: 'reviews',
+            populate: {
+                path: 'userId',
+                select: 'content rating name'
+            }
+        });
+
+    if (!campground) {
+        return next(new ErrorResponse(`Campground not found with id of ${req.params.id}`, 404));
     }
-};
+    res.status(200).json({ success: true, data: campground });
+});
 
 exports.updateCampground = async (req, res) => {
     const { id } = req.params;

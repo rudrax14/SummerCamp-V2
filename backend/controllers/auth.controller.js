@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const redis = require("../config/redisConnection");
 const catchAsync = require("../utils/catchAsync");
-const AppError = require("../utils/AppError");
+const CustomError = require("../utils/CustomError");
 
 // exports.signup = async (req, res) => {
 //     try {
@@ -56,14 +56,15 @@ exports.signup = catchAsync(async (req, res, next) => {
     const { name, email, password } = req.body;
 
     // if (!name || !email || !password) {
-    //     return next(new AppError('Please provide name, email and password', 400));
+    //     return next(new CustomError('Please provide name, email and password', 400));
     // }
 
     // Check if the user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-        return next(new AppError('User already exists', 400));
-    }
+    // const existingUser = await User.findOne({ email });
+    // if (existingUser) {
+    //     return next(new CustomError('User already exists', 400));
+    // }
+    // is been handled in the errorController.js
 
     // Secure password using bcrypt
     const hashedPassword = await bcrypt.hash(password, 10);

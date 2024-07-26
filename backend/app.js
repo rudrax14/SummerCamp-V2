@@ -25,7 +25,7 @@ const authRoutes = require("./routes/auth.route");
 const userRoutes = require("./routes/user.route");
 const campgroundRoutes = require("./routes/campground.route");
 const reviewRoutes = require("./routes/review.route");
-const AppError = require('./utils/AppError');
+const CustomError = require('./utils/CustomError');
 
 // Declaring routes
 app.use("/api/v1/auth", authRoutes);
@@ -33,7 +33,7 @@ app.use('/api/v1', userRoutes);
 app.use('/api/v1', campgroundRoutes);
 app.use('/api/v1', reviewRoutes);
 app.all('*', (req, res, next) => {
-    next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
+    next(new CustomError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 // Global error handling middleware
 app.use(errorController);
