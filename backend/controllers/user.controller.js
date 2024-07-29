@@ -26,7 +26,7 @@ exports.sendPasswordResetEmail = catchAsync(async (req, res) => {
     }
 
     // Generate OTP using crypto-js and set expiry time
-    const otp = cryptoJS.lib.WordArray.random(3).toString().toUpperCase(); // 4-digit OTP
+    const otp = cryptoJS.lib.WordArray.random(3).toString().toUpperCase(); // 6-digit OTP
     user.resetPasswordOTP = otp;
     user.otpExpiry = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
     await user.save();
