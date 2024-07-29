@@ -22,6 +22,8 @@ const userSchema = new mongoose.Schema({
             ref: 'Campground',
         },
     ],
+    resetPasswordOTP: String,
+    otpExpiry: Date,
 }, {
     timestamps: true,
 });

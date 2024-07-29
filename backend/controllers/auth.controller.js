@@ -16,7 +16,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     // is been handled in the errorController.js
 
     // Secure password using bcrypt
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create the user in the database
     const user = await User.create({
