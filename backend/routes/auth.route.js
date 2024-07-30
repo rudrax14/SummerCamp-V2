@@ -4,7 +4,7 @@ const { auth } = require('../middlewares/auth.middleware');
 const express = require('express');
 const router = express.Router();
 
-router.post('/signup', signup);
+router.post('/register', signup);
 router.post('/login', login);
 router.post('/logout', logout);
 // Route to check if the token is blacklisted
