@@ -7,7 +7,7 @@ const campgroundSchema = new mongoose.Schema({
     },
     thumbnail: {
         type: String,
-        // required: [true, 'Image is required'],
+        required: [true, 'Image is required'],
     },
     geometry: {
         type: {

@@ -13,6 +13,7 @@ const CampgroundForm: React.FC = () => {
     geometry: null,
     uploading: false,
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const setFormField = (field: string, value: any) => {
     setFormData((prev) => ({
@@ -54,11 +55,58 @@ const CampgroundForm: React.FC = () => {
     }
   }, [formData.location]);
 
+  const uploadHandler = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedFile) {
+      toast.error("No file selected for upload");
+      return;
+    }
+
+    const formDataImage = new FormData();
+    formDataImage.append("thumbnail", selectedFile);
+
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/v1/upload",
+        formDataImage,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      // Log the entire response to check the property name
+      console.log("Thumbnail upload response:", res.data.imageUrl);
+      // Ensure you use the correct property based on the response
+      const thumbnailUrl = res.data.imageUrl;
+
+      if (thumbnailUrl) {
+        setFormField("thumbnail", thumbnailUrl);
+        toast.success("Thumbnail uploaded successfully.");
+      } else {
+        throw new Error("URL not found in response");
+      }
+    } catch (err) {
+      console.error("Error uploading thumbnail:", err);
+      toast.error("Failed to upload thumbnail");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    setFormField("uploading", true);
+    if (formData.uploading) {
+      toast.error("Please wait for the thumbnail to upload.");
+      return;
+    }
+
+    if (!formData.thumbnail) {
+      toast.error("Please upload a thumbnail before submitting.");
+      return;
+    }
     console.log(formData);
+    setFormField("uploading", true);
     try {
       await axios.post("http://localhost:5000/api/v1/campgrounds", formData, {
         headers: {
@@ -111,10 +159,19 @@ const CampgroundForm: React.FC = () => {
           Thumbnail:
           <input
             type="file"
-            onChange={(e) => setFormField("thumbnail", e.target.files?.[0])}
+            accept="image/*"
+            onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
             className="block w-full mt-1 p-2 border border-gray-300 rounded"
           />
         </label>
+        <button
+          type="button"
+          onClick={uploadHandler}
+          className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          disabled={!selectedFile} // Disable if no file is selected
+        >
+          Upload Thumbnail
+        </button>
         <label className="block">
           Description:
           <textarea

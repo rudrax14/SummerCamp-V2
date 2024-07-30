@@ -5,20 +5,13 @@ const CustomError = require('../utils/CustomError');
 const uploadFileToCloudinary = require('../utils/imageUpload');
 
 exports.createCampground = catchAsync(async (req, res, next) => {
-    const { name, geometry, price, location, description } = req.body;
-
-    if (!req.files || !req.files.thumbnail) {
-        return next(new CustomError('Please upload a image', 400));
-    }
-
-    const file = req.files.thumbnail;
+    const { name, geometry, price, location, description, thumbnail } = req.body;
 
 
-    const result = await uploadFileToCloudinary(file, "campgrounds");
     // Create a new campground with the uploaded thumbnail URL
     const newCampground = new Campground({
         name,
-        thumbnail: result.secure_url,
+        thumbnail,
         geometry,
         price,
         location,
@@ -40,6 +33,18 @@ exports.createCampground = catchAsync(async (req, res, next) => {
 
 });
 
+exports.upload = catchAsync(async (req, res, next) => {
+    if (!req.files || !req.files.thumbnail) {
+        return next(new CustomError('Please upload a image', 400));
+    }
+
+    const file = req.files.thumbnail;
+
+
+    const result = await uploadFileToCloudinary(file, "campgrounds");
+
+    res.status(200).json({ success: true, imageUrl: result.secure_url });
+});
 
 exports.getCampgrounds = catchAsync(async (req, res) => {
     const campgrounds = await Campground.find().populate('author', 'username');

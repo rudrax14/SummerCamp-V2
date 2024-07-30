@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { auth, isAuthor } = require('../middlewares/auth.middleware');
-const { createCampground, getCampgrounds, getCampgroundById, updateCampground, deleteCampground } = require('../controllers/campground.controller');
+const { createCampground, getCampgrounds, getCampgroundById, updateCampground, deleteCampground, upload } = require('../controllers/campground.controller');
 
 // Campground Routes
 router.route('/campgrounds')
@@ -13,4 +13,6 @@ router.route('/campgrounds/:id')
     .put(auth, isAuthor, updateCampground)
     .delete(auth, isAuthor, deleteCampground);
 
+router.route('/upload')
+    .post(auth, upload)
 module.exports = router;
