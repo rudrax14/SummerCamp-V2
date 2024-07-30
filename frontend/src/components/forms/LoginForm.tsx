@@ -48,6 +48,7 @@ export function LoginForm() {
         data
       );
       console.log(response.data);
+      localStorage.setItem("token", response.data.token);
       toast.success("Login successful");
       router.push("/campgrounds"); // Redirect to campgrounds page using router
     } catch (error) {

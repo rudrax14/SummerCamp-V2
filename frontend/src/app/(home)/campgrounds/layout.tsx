@@ -24,25 +24,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
           <div className="flex gap-4 items-center">
             <li>
-              <Link href="/login">Login</Link>
-            </li>
-            <li>
-              <Link href="/register">Register</Link>
+              <Link href="/">Logout</Link>
             </li>
           </div>
         </ul>
       </nav>
       <div className="items-center justify-center flex min-h-screen w-full">
-        <Card>
-          <Image
-            src="https://images.unsplash.com/photo-1571863533956-01c88e79957e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1267&q=80"
-            alt="Login background"
-            className="card-img-top"
-            width={363}
-            height={205}
-          />
-          {children}
-        </Card>
+        {children}
       </div>
     </main>
   );

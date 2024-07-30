@@ -7,17 +7,17 @@ const campgroundSchema = new mongoose.Schema({
     },
     thumbnail: {
         type: String,
-        required: [true, 'Image is required'],
+        // required: [true, 'Image is required'],
     },
     geometry: {
         type: {
             type: String,
             enum: ['Point'],
-            // required: true,
+            required: true,
         },
         coordinates: {
             type: [Number],
-            // required: true,
+            required: true,
         }
     },
     price: {
