@@ -10,6 +10,7 @@ type Campground = {
   description: string;
   thumbnail: string;
   price: number;
+  location: string;
 };
 
 function AllCampgrounds() {
@@ -33,26 +34,35 @@ function AllCampgrounds() {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-10">
-      {campgrounds.map((campground) => (
-        <div
-          key={campground._id}
-          className="bg-white rounded-lg overflow-hidden shadow-lg"
-        >
-          <img
-            src={campground.thumbnail}
-            alt={campground.name}
-            className="w-full h-48 object-cover"
-          />
-          <div className="p-4">
-            <h2 className="text-xl font-bold text-gray-800">
-              {campground.name}
-            </h2>
-            <p className="text-gray-600 mt-2">{campground.description}</p>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">All Campgrounds</h1>
+      <div className="flex flex-col gap-4">
+        {campgrounds.map((campground) => (
+          <div
+            key={campground._id}
+            className="bg-white rounded-lg shadow-md gap-8 overflow-hidden flex"
+          >
+            <img
+              src={campground.thumbnail}
+              alt={campground.name}
+              className="h-48 w-60 object-cover"
+            />
+            <div className="p-4 flex flex-col border justify-between overflow-hidden flex-grow">
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">{campground.name}</h2>
+                <p className="text-gray-600 mt-2">{campground.description}</p>
+                <p className="text-sm text-gray-500 mt-1">{campground.location}</p>
+              </div>
+              <button
+                onClick={() => navigateHandler(campground._id)}
+                className="mt-4 bg-blue-500 text-white rounded px-4 py-2 self-start"
+              >
+                View {campground.name}
+              </button>
+            </div>
           </div>
-          <button onClick={() => navigateHandler(campground._id)}>View</button>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import CampgroundMap from "./CampgroundMap";
+import Link from "next/link";
 
 type Campground = {
   _id: string;
@@ -89,15 +90,25 @@ const SingleCampground: React.FC<SingleCampgroundProps> = ({ id }) => {
             <strong>Created:</strong>{" "}
             {new Date(campground.createdAt).toDateString()}
           </p>
+          <div>
+            <Link
+              href={`${id}/edit`}
+              className="bg-green-500 text-white font-bold py-2 px-4 rounded-md hover:bg-green-600"
+            >
+              Edit
+            </Link>
+            <button className="bg-red-500 text-white font-bold py-2 px-4 rounded-md hover:bg-red-600 ml-2">
+              Delete
+            </button>
+          </div>
         </div>
-        <CampgroundMap
-          coordinates={campground.geometry.coordinates}
-          title={campground.name}
-          location={campground.location}
-        />
-        {/* Review Section */}
         <div>
-          <h2 className="text-2xl font-semibold mb-4">Leave a Review</h2>
+          <CampgroundMap
+            coordinates={campground.geometry.coordinates}
+            title={campground.name}
+            location={campground.location}
+          />
+          <h2 className="text-2xl font-semibold my-4">Leave a Review</h2>
           <form className="space-y-4">
             <div>
               <label className="block text-gray-700">Rating:</label>

@@ -5,7 +5,7 @@ import Map from "@/components/Map";
 
 export default function page() {
   return (
-    <div>
+    <div className="container">
       <div className="flex justify-center mt-10">
         <Map />
       </div>
