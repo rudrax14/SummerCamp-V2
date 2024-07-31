@@ -1,24 +1,30 @@
+// components/HomepageMap.tsx
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
-import "mapbox-gl/dist/mapbox-gl.css";
 
-// Store your Mapbox access token in an environment variable
+import "mapbox-gl/dist/mapbox-gl.css";
+import { initializeMap } from "@/util/mapboxUtils";
+
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
 
-const Map: React.FC = () => {
+const HomepageMap: React.FC = () => {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    // Initialize the map
-    const map = new mapboxgl.Map({
-      container: "map",
-      style: "mapbox://styles/mapbox/light-v10",
-      center: [78.9629, 20.5937],
-      zoom: 3,
+    if (!mapContainerRef.current) return;
+
+    const map = initializeMap(
+      mapContainerRef.current,
+      [78.9629, 20.5937],
+      "mapbox://styles/mapbox/light-v10",
+      3
+    );
+
+    map.on("load", () => {
+      map.resize();
     });
 
-    map.addControl(new mapboxgl.NavigationControl());
-
-    // Fetch and add campgrounds data to the map
     fetch("http://localhost:5000/api/v1/campgrounds")
       .then((response) => response.json())
       .then(({ data }) => {
@@ -96,17 +102,12 @@ const Map: React.FC = () => {
             },
           });
 
-          // Event handlers
           map.on("click", "unclustered-point", (e) => {
             const { properties, geometry } = e.features[0];
             new mapboxgl.Popup()
               .setLngLat(geometry.coordinates)
               .setHTML(
-                `
-                <strong>${properties?.name}</strong><br>
-                <p>${properties?.description}</p>
-                <p>Price: ${properties?.price}</p>
-              `
+                `<strong>${properties?.name}</strong><br><p>${properties?.description}</p><p>Price: ${properties?.price}</p>`
               )
               .addTo(map);
           });
@@ -140,7 +141,7 @@ const Map: React.FC = () => {
     return () => map.remove();
   }, []);
 
-  return <div id="map" className="w-[1100px] h-[500px]" />;
+  return <div ref={mapContainerRef} className="w-[1100px] h-[500px]" />;
 };
 
-export default Map;
+export default HomepageMap;

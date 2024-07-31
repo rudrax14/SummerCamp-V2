@@ -6,7 +6,7 @@ import Image from "next/image";
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <main className="">
-      <nav className="flex sticky top-0 bg-slate-800 text-white h-12">
+      <nav className="flex sticky top-0 bg-slate-800 z-20 text-white h-12">
         <ul className="flex gap-4 justify-between w-full items-center px-4">
           <div className="flex gap-4 items-center">
             <Link href={"/"} className="text-xl">
