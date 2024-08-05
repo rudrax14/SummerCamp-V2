@@ -83,7 +83,7 @@ exports.updateCampground = catchAsync(async (req, res, next) => {
     }
 
     // Update fields
-    const updateFields = ['name', 'geometry', 'price', 'location', 'description'];
+    const updateFields = ['name', 'geometry', 'price', 'location', 'description', 'thumbnail'];
     updateFields.forEach(field => {
         if (req.body[field] !== undefined) {
             campground[field] = req.body[field];

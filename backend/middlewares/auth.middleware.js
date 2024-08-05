@@ -45,7 +45,7 @@ exports.isAuthor = catchAsync(async (req, res, next) => {
 
     const campground = await Campground.findById(id);
 
-    if (campground.authortoString() === req.user.id) {
+    if (campground.author.toString() === req.user.id) {
         next();
     } else {
         return next(new CustomError("You do not have permission to perform this action", 403));

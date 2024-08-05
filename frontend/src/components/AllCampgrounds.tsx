@@ -40,14 +40,14 @@ function AllCampgrounds() {
         {campgrounds.map((campground) => (
           <div
             key={campground._id}
-            className="bg-white rounded-lg shadow-md gap-8 overflow-hidden flex"
+            className="bg-white rounded-lg shadow-md gap-4 overflow-hidden flex"
           >
             <img
               src={campground.thumbnail}
               alt={campground.name}
-              className="h-48 w-60 object-cover"
+              className="w-72 object-cover"
             />
-            <div className="p-4 flex flex-col border justify-between overflow-hidden flex-grow">
+            <div className="p-4 flex flex-col justify-between overflow-hidden flex-grow">
               <div>
                 <h2 className="text-xl font-bold text-gray-800">{campground.name}</h2>
                 <p className="text-gray-600 mt-2">{campground.description}</p>
